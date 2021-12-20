@@ -1,0 +1,271 @@
+---
+title: "ISAR dIF for sashimi scoring"
+output: html_document
+---
+
+functions for graphing the ISAR-niagara output. Why is this necessary? Cause i didn't keep the whole switch list format, just the isoformFeatures dataframe, so the default ISAR functions aren't gonna plot that for me. Also, it was good practice, and will come in handy for presentations and other things requiring pretty, customizable figures. 
+
+```{r}
+library(tidyverse)
+library(IsoformSwitchAnalyzeR)
+```
+
+
+```{r}
+gene_plot <- function(isoformFeatures, gene, cond1, cond2, col1 = "cadetblue2"){
+    df <- isoformFeatures %>% filter(condition_1 == cond1, condition_2 == cond2, gene_id == gene)
+    df <- df %>% select(isoform_id, gene_id, condition_1, condition_2, gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2) %>% 
+    mutate(IF_1 = iso_value_1 / gene_value_1, IF_2 = iso_value_2 / gene_value_2, IF_stderr_1 = iso_stderr_1 / gene_value_1, IF_stderr_2 = iso_stderr_2 / gene_value_2) %>% 
+    pivot_longer(cols= c(gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2, IF_1, IF_2, IF_stderr_1, IF_stderr_2), names_to = "value_name", values_to= "value") %>% 
+    pivot_longer(cols = c(condition_1, condition_2), names_to = "condition_name", values_to = "condition") %>% 
+    filter(str_sub(condition_name, -1) == str_sub(value_name, -1)) %>% 
+    mutate(name = str_sub(value_name, 1, -3)) %>% 
+    select(-c(condition_name, value_name))
+    
+    gene_plot <- df %>% filter(name == "gene_value" | name == "gene_stderr") %>% 
+    pivot_wider(id_cols = c(isoform_id, gene_id, condition), names_from = name, values_from = value) %>%
+    slice(1:2)
+    
+    ggplot(gene_plot, aes(x = condition, y = gene_value))+
+    geom_bar(position = position_dodge(), stat = "identity", fill = col1)+
+    geom_errorbar(aes(ymin = gene_value - gene_stderr, ymax = gene_value + gene_stderr), width = 0.2)
+}
+
+trans_plot <- function(isoformFeatures, gene, cond1, cond2, col1 = "cadetblue2", col2 = "cadetblue3"){
+    df <- isoformFeatures %>% filter(condition_1 == cond1, condition_2 == cond2, gene_id == gene)
+    df <- df %>% select(isoform_id, gene_id, condition_1, condition_2, gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2) %>% 
+    mutate(IF_1 = iso_value_1 / gene_value_1, IF_2 = iso_value_2 / gene_value_2, IF_stderr_1 = iso_stderr_1 / gene_value_1, IF_stderr_2 = iso_stderr_2 / gene_value_2) %>% 
+    pivot_longer(cols= c(gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2, IF_1, IF_2, IF_stderr_1, IF_stderr_2), names_to = "value_name", values_to= "value") %>% 
+    pivot_longer(cols = c(condition_1, condition_2), names_to = "condition_name", values_to = "condition") %>% 
+    filter(str_sub(condition_name, -1) == str_sub(value_name, -1)) %>% 
+    mutate(name = str_sub(value_name, 1, -3)) %>% 
+    select(-c(condition_name, value_name))
+    
+    trans_plot <- df %>% filter(name == "iso_value" | name == "iso_stderr") %>% 
+    pivot_wider(id_cols = c(isoform_id, gene_id, condition), names_from = name, values_from = value)
+    
+    colour <- c(col1, col2)
+    
+    ggplot(trans_plot, aes(x = isoform_id, y = iso_value, fill = condition))+
+    geom_bar(position = position_dodge(), stat = "identity")+
+    geom_errorbar(aes(ymin = iso_value - iso_stderr, ymax = iso_value + iso_stderr), width = 0.2, position = position_dodge(width = 0.9))+
+    scale_fill_manual(values = colour)
+}
+
+IF_plot <- function(isoformFeatures, gene, cond1, cond2, col1 = "cadetblue2", col2 = "cadetblue3"){
+  df <- isoformFeatures %>% filter(condition_1 == cond1, condition_2 == cond2, gene_id == gene)
+    df <- df %>% select(isoform_id, gene_id, condition_1, condition_2, gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2) %>% 
+    mutate(IF_1 = iso_value_1 / gene_value_1, IF_2 = iso_value_2 / gene_value_2, IF_stderr_1 = iso_stderr_1 / gene_value_1, IF_stderr_2 = iso_stderr_2 / gene_value_2) %>% 
+    pivot_longer(cols= c(gene_value_1, gene_value_2, gene_stderr_1, gene_stderr_2, iso_value_1, iso_value_2, iso_stderr_1, iso_stderr_2, IF_1, IF_2, IF_stderr_1, IF_stderr_2), names_to = "value_name", values_to= "value") %>% 
+    pivot_longer(cols = c(condition_1, condition_2), names_to = "condition_name", values_to = "condition") %>% 
+    filter(str_sub(condition_name, -1) == str_sub(value_name, -1)) %>% 
+    mutate(name = str_sub(value_name, 1, -3)) %>% 
+    select(-c(condition_name, value_name))
+    
+ IF_plot <- df %>% filter(name == "gene_value" | name == "iso_value" | name == "iso_stderr") %>% 
+    pivot_wider(id_cols = c(isoform_id, gene_id, condition), names_from = name, values_from = value) %>% 
+    mutate(IF = iso_value / gene_value, IF_stderr = iso_stderr / gene_value)  
+ 
+ colour <- c(col1, col2)
+ 
+ ggplot(IF_plot, aes(x = isoform_id, y = IF, fill = condition))+
+    geom_bar(position = position_dodge(), stat = "identity")+
+    geom_errorbar(aes(ymin = IF - IF_stderr, ymax = IF + IF_stderr), width = 0.2, position = position_dodge(width = .9))+
+    scale_fill_manual(values = colour)+
+    labs(x = "Isoform", y = "Isoform fraction")+
+    theme_minimal()+
+    theme(legend.title = element_blank(), axis.text.x = element_text(angle = 90))
+}
+```
+
+```{r}
+isoformFeatures <- read_delim("C:/Users/hasna/Documents/MSc_project/stringtie/sp_stringtie_isoform_features.tsv")
+```
+
+ok, so we can use that, combines with IGV, to find the predominant isoform(s) for stringtie, and use ISAR bult-ins for kallisto. Important note: I'll just be scoring the single most upregulated isoform in droughted and watered, so no more than 2 isoforms per gene, just the ones that change the most (obviously not a problem for vast and majiq). Also for stringtie, I ignored any transcripts that spanned multiple genes
+
+
+stringtie IF:
+```{r}
+IF_plot(isoformFeatures, "AT3G54810", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT3G25800", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT3G05580", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G28840", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G47560", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G23760", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT5G41050", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT1G11650", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT1G56070", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT3G54810", "K60w", "L60w")
+
+IF_plot(isoformFeatures, "AT3G02460", "K60w", "L60w")
+IF_plot(isoformFeatures, "AT3G27090", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT2G14080", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT2G22795", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT1G67950", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT4G13010", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G14130", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G08940", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT2G46280", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT1G63360", "K60d", "K60w")
+
+IF_plot(isoformFeatures, "AT3G08610", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G30410", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT1G17200", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G39795", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT3G55800", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT4G30270", "K40w", "L40w")
+IF_plot(isoformFeatures, "AT1G06690", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT5G25460", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G39780", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT3G10370", "K20w", "L20w")
+
+IF_plot(isoformFeatures, "AT2G42750", "K60w", "L60w")
+IF_plot(isoformFeatures, "AT3G22942", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G30020", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT2G48160", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT1G79520", "K40d", "K40w")
+IF_plot(isoformFeatures, "AT2G44950", "K40w", "L40w")
+IF_plot(isoformFeatures, "AT1G30300", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT4G34070", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G38020", "K60d", "L60d")
+IF_plot(isoformFeatures, "AT1G23360", "K20w", "L20w")
+
+IF_plot(isoformFeatures, "AT5G14320", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT2G26580", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT1G11860", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G03250", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G20500", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G30950", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G23400", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G46780", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT5G48220", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G43910", "L20d", "L20w")
+
+IF_plot(isoformFeatures, "AT1G66200", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G11420", "K60w", "L60w")
+IF_plot(isoformFeatures, "AT3G18890", "K20w", "L20w")
+IF_plot(isoformFeatures, "AT4G34730", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G18010", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT1G12110", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT3G50790", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G24690", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT5G23890", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT1G75280", "L20d", "L20w")
+
+IF_plot(isoformFeatures, "AT1G31580", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT5G07020", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G59180", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G56680", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT2G44120", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT5G62070", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT5G17170", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G15353", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT5G60170", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT1G73530", "L20d", "L20w")
+
+IF_plot(isoformFeatures, "AT3G51520", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT1G50250", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT3G49120", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT2G24820", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT3G47470", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT1G65220", "K40d", "L40d")
+IF_plot(isoformFeatures, "AT4G11600", "L20d", "L20w")
+IF_plot(isoformFeatures, "AT4G19710", "K20d", "L20d")
+IF_plot(isoformFeatures, "AT1G78870", "K40w", "L40w")
+IF_plot(isoformFeatures, "AT4G11010", "K20d", "L20d")
+```
+
+for kallisto, we need to re-run the ISAR code as in kallisto/2vastisoforms.Rmd. Then we can find isoform switches using ISAR built-in functions.
+
+run the kallisto-ISAR code in kallisto/ISAR_2vastisoforms, cause for whatever reason it ain't working here. Then once the switchlist is created, proceed as below:
+```{r}
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G32350', condition1 = "K60w", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G23860', condition1 = "L60d", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G37450', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G57050', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G59830', condition1 = "K40d", condition2 = "K40w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G13580', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G18300', condition1 = "K40w", condition2 = "L40w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G01810', condition1 = "K60w", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G16950', condition1 = "K60w", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G27430', condition1 = "L20d", condition2 = "L20w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G53490', condition1 = "K40w", condition2 = "L40w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G22720', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G59150', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G50960', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G14415', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G02530', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G48110', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G59950', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G57580', condition1 = "K40w", condition2 = "L40w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G10590', condition1 = "L20d", condition2 = "L20w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G54810', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G25800', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G05580', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G28840', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G47560', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G23760', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G41050', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G11650', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G56070', condition1 = "K60d", condition2 = "L60d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G54810', condition1 = "K60w", condition2 = "L60w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G02460', condition1 = "K60w", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G27090', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G14080', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G22795', condition1 = "K60d", condition2 = "L60d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G67950', condition1 = "K60d", condition2 = "L60d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G13010', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G14130', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G08940', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G46280', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G63360', condition1 = "K60d", condition2 = "K60w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G29510', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G33510', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G66420', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G32520', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G12900', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G20380', condition1 = "K60d", condition2 = "L60d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G40430', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G64400', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G49040', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G02420', condition1 = "L20d", condition2 = "L20w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G22910', condition1 = "K60d", condition2 = "L60d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G16880', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G43430', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G10060', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G46390', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G09340', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G16390', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G23400', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G14740', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G51200', condition1 = "L20d", condition2 = "L20w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G14320', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G26580', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G11860', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G03250', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G20500', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G30950', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G23400', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G46780', condition1 = "K40d", condition2 = "L40d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G48220', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT2G43910', condition1 = "L20d", condition2 = "L20w")
+
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G66200', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G11420', condition1 = "K60w", condition2 = "L60w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G18890', condition1 = "K20w", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G34730', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G18010', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G12110', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT3G50790', condition1 = "L20d", condition2 = "L20w")
+switchPlotIsoUsage(aSwitchList, gene = 'AT4G24690', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT5G23890', condition1 = "K20d", condition2 = "L20d")
+switchPlotIsoUsage(aSwitchList, gene = 'AT1G75280', condition1 = "L20d", condition2 = "L20w")
+```
+

@@ -1,0 +1,356 @@
+---
+title: "sashimi plot scoring"
+output: html_document
+---
+
+swiped the beginning of this code from the program comparisons, but the end goal is to generate a sample of dAS genes from each of the 15 distinct program combinations. Then, we'll write it out to excel, and go through manually and add all the events predicted by each program. then we'll get rid of the program identifiers, and go through and score the agreement between the sashimi plots and the listed events, to get a look at which programs are doing the best job predicting dAS events that agree with the genomic alignments (of course if the genomic alignments are wrong, we're screwed either way...)
+
+```{r}
+library(tidyverse)
+```
+
+vast-tools:
+```{r}
+vast_k20dk20w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K20d-K20w_68events/K20d-K20w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K20dK20w"))
+
+vast_k20dl20d <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K20d-L20d_327events/K20d-L20d_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K20dL20d"))
+
+vast_k20wl20w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K20w-L20w_196events/K20w-L20w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K20wL20w"))
+
+vast_k40dk40w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K40d-K40w_23events/K40d-K40w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K40dK40w"))
+
+vast_k40dl40d <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K40d-L40d_168events/K40d-L40d_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K40dL40d"))
+
+vast_k40wl40w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K40w-L40w_69events/K40w-L40w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K40wL40w"))
+
+vast_k60dk60w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K60d-K60w_6events/K60d-K60w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K60dK60w"))
+
+vast_k60dl60d <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K60d-L60d_94events/K60d-L60d_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K60dL60d"))
+
+vast_k60wl60w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/K60w-L60w_58events/K60w-L60w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("K60wL60w"))
+
+vast_l20dl20w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/L20d-L20w_706events/L20d-L20w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("L20dL20w"))
+
+vast_l40dl40w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/L40d-L40w_27events/L40d-L40w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("L40dL40w"))
+
+vast_l60dl60w <- read_delim("../../vasttools/all_data/dPSI25_no_merging_all_reps/L60d-L60w_5events/L60d-L60w_compare_ouput_complete.tab", col_names = T, delim = "\t") %>% 
+  select(GeneID) %>% 
+  mutate(prog = c("vast-tools"), comp = c("L60dL60w"))
+```
+
+kallisto:
+```{r}
+kallisto_k20dk20w <- read_delim("../../kallisto/dAS_analysis/dAS_K20dK20w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K20dK20w"))
+
+kallisto_k40dk40w <- read_delim("../../kallisto/dAS_analysis/dAS_K40dK40w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K40dK40w"))
+
+kallisto_k60dk60w <- read_delim("../../kallisto/dAS_analysis/dAS_K60dK60w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K60dK60w"))
+
+kallisto_l20dl20w <- read_delim("../../kallisto/dAS_analysis/dAS_L20dL20w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("L20dL20w"))
+
+kallisto_l40dl40w <- read_delim("../../kallisto/dAS_analysis/dAS_L40dL40w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("L40dL40w"))
+
+kallisto_l60dl60w <- read_delim("../../kallisto/dAS_analysis/dAS_L60dL60w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("L60dL60w"))
+
+kallisto_k20dl20d <- read_delim("../../kallisto/dAS_analysis/dAS_K20dL20d_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K20dL20d"))
+
+kallisto_k40dl40d <- read_delim("../../kallisto/dAS_analysis/dAS_K40dL40d_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K40dL40d"))
+
+kallisto_k60dl60d <- read_delim("../../kallisto/dAS_analysis/dAS_K60dL60d_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K60dL60d"))
+
+kallisto_k20wl20w <- read_delim("../../kallisto/dAS_analysis/dAS_K20wL20w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K20wL20w"))
+
+kallisto_k40wl40w <- read_delim("../../kallisto/dAS_analysis/dAS_K40wL40w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K40wL40w"))
+
+kallisto_k60wl60w <- read_delim("../../kallisto/dAS_analysis/dAS_K60wL60w_kallisto.txt", col_names = T, delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("kallisto"), comp = c("K60wL60w"))
+```
+
+majiq:
+```{r}
+majiq_k20dk20w <- read_delim("../../majiq/dAS_analysis/filter25/K20dK20w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K20dK20w"))
+
+majiq_k40dk40w <- read_delim("../../majiq/dAS_analysis/filter25/K40dK40w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K40dK40w"))
+
+majiq_k60dk60w <- read_delim("../../majiq/dAS_analysis/filter25/K60dK60w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K60dK60w"))
+
+majiq_l20dl20w <- read_delim("../../majiq/dAS_analysis/filter25/L20dL20w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("L20dL20w"))
+
+majiq_l40dl40w <- read_delim("../../majiq/dAS_analysis/filter25/L40dL40w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("L40dL40w"))
+
+majiq_l60dl60w <- read_delim("../../majiq/dAS_analysis/filter25/L60dL60w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("L60dL60w"))
+
+majiq_k20dl20d <- read_delim("../../majiq/dAS_analysis/filter25/K20dL20d.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K20dL20d"))
+
+majiq_k40dl40d <- read_delim("../../majiq/dAS_analysis/filter25/K40dL40d.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K40dL40d"))
+
+majiq_k60dl60d <- read_delim("../../majiq/dAS_analysis/filter25/K60dL60d.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K60dL60d"))
+
+majiq_k20wl20w <- read_delim("../../majiq/dAS_analysis/filter25/K20wL20w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K20wL20w"))
+
+majiq_k40wl40w <- read_delim("../../majiq/dAS_analysis/filter25/K40wL40w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K40wL40w"))
+
+majiq_k60wl60w <- read_delim("../../majiq/dAS_analysis/filter25/K60wL60w.tsv", delim = "\t") %>% 
+  select(`Gene ID`) %>% 
+  mutate(prog = c("majiq"), comp = c("K60wL60w"))
+```
+
+stringtie:
+```{r}
+stringtie_k20dk20w <- read_delim("dAS_K20dK20w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K20dK20w"))
+
+stringtie_k40dk40w <- read_delim("dAS_K40dK40w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K40dK40w"))
+
+stringtie_k60dk60w <- read_delim("dAS_K60dK60w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K60dK60w"))
+
+stringtie_l20dl20w <- read_delim("dAS_L20dL20w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("L20dL20w"))
+
+stringtie_l40dl40w <- read_delim("dAS_L40dL40w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("L40dL40w"))
+
+stringtie_l60dl60w <- read_delim("dAS_L60dL60w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("L60dL60w"))
+
+stringtie_k20dl20d <- read_delim("dAS_K20dL20d_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K20dL20d"))
+
+stringtie_k40dl40d <- read_delim("dAS_K40dL40d_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K40dL40d"))
+
+stringtie_k60dl60d <- read_delim("dAS_K60dL60d_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K60dL60d"))
+
+stringtie_k20wl20w <- read_delim("dAS_K20wL20w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K20wL20w"))
+
+stringtie_k40wl40w <- read_delim("dAS_K40wL40w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K40wL40w"))
+
+stringtie_k60wl60w <- read_delim("dAS_K60wL60w_stringtie.txt", delim = "\t") %>% 
+  select(gene_id) %>% 
+  mutate(prog = c("stringtie"), comp = c("K60wL60w"))
+```
+
+ok, so let's do the graphs of AS genes by comparison group for each program. Gonna switch the order to decreasing soil water content, cause the other way around seems to confuse people.
+
+create a list of unique genes in each comparison
+```{r}
+K20dK20w <- unique(c(vast_k20dk20w$GeneID, kallisto_k20dk20w$gene_id, majiq_k20dk20w$`Gene ID`, stringtie_k20dk20w$gene_id))
+K40dK40w <- unique(c(vast_k40dk40w$GeneID, kallisto_k40dk40w$gene_id, majiq_k40dk40w$`Gene ID`, stringtie_k40dk40w$gene_id))
+K60dK60w <- unique(c(vast_k60dk60w$GeneID, kallisto_k60dk60w$gene_id, majiq_k60dk60w$`Gene ID`, stringtie_k60dk60w$gene_id))
+
+L20dL20w <- unique(c(vast_l20dl20w$GeneID, kallisto_l20dl20w$gene_id, majiq_l20dl20w$`Gene ID`, stringtie_l20dl20w$gene_id))
+L40dL40w <- unique(c(vast_l40dl40w$GeneID, kallisto_l40dl40w$gene_id, majiq_l40dl40w$`Gene ID`, stringtie_l40dl40w$gene_id))
+L60dL60w <- unique(c(vast_l60dl60w$GeneID, kallisto_l60dl60w$gene_id, majiq_l60dl60w$`Gene ID`, stringtie_l60dl60w$gene_id))
+
+K20dL20d <- unique(c(vast_k20dl20d$GeneID, kallisto_k20dl20d$gene_id, majiq_k20dl20d$`Gene ID`, stringtie_k20dl20d$gene_id))
+K40dL40d <- unique(c(vast_k40dl40d$GeneID, kallisto_k40dl40d$gene_id, majiq_k40dl40d$`Gene ID`, stringtie_k40dl40d$gene_id))
+K60dL60d <- unique(c(vast_k60dl60d$GeneID, kallisto_k60dl60d$gene_id, majiq_k60dl60d$`Gene ID`, stringtie_k60dl60d$gene_id))
+
+K20wL20w <- unique(c(vast_k20wl20w$GeneID, kallisto_k20wl20w$gene_id, majiq_k20wl20w$`Gene ID`, stringtie_k20wl20w$gene_id))
+K40wL40w <- unique(c(vast_k40wl40w$GeneID, kallisto_k40wl40w$gene_id, majiq_k40wl40w$`Gene ID`, stringtie_k40wl40w$gene_id))
+K60wL60w <- unique(c(vast_k60wl60w$GeneID, kallisto_k60wl60w$gene_id, majiq_k60wl60w$`Gene ID`, stringtie_k60wl60w$gene_id))
+```
+
+assign each gene a column for the program(s) to which it belongs and step 4: join program columns together
+```{r}
+#this may objectively be some of the ugliest code I've ever written... find a way to clean this up!
+#any and all attempts at writing a function for this have been met with failure
+#so it's staying ugly for now grrrr
+
+K20dK20w <- as.data.frame(K20dK20w)
+colnames(K20dK20w) <- "gene"
+K20dK20w <- K20dK20w %>% mutate(prog1 = if_else(gene %in% vast_k20dk20w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k20dk20w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k20dk20w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k20dk20w$gene_id, "stringtie", "NA"))  
+K20dK20w[K20dK20w == "NA"] = NA
+K20dK20w <- unite(K20dK20w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K20dK20w"))
+
+K40dK40w <- as.data.frame(K40dK40w)
+colnames(K40dK40w) <- "gene"
+K40dK40w <- K40dK40w %>% mutate(prog1 = if_else(gene %in% vast_k40dk40w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k40dk40w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k40dk40w$`Gene ID`, "majiq", "NA"),prog4 = if_else(gene %in% stringtie_k40dk40w$gene_id, "stringtie", "NA")) 
+K40dK40w[K40dK40w == "NA"] = NA
+K40dK40w <- unite(K40dK40w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K40dK40w"))
+
+K60dK60w <- as.data.frame(K60dK60w)
+colnames(K60dK60w) <- "gene"
+K60dK60w <- K60dK60w %>% mutate(prog1 = if_else(gene %in% vast_k60dk60w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k60dk60w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k60dk60w$`Gene ID`, "majiq", "NA"),prog4 = if_else(gene %in% stringtie_k60dk60w$gene_id, "stringtie", "NA")) 
+K60dK60w[K60dK60w == "NA"] = NA
+K60dK60w <- unite(K60dK60w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K60dK60w"))
+
+L20dL20w <- as.data.frame(L20dL20w)
+colnames(L20dL20w) <- "gene"
+L20dL20w <- L20dL20w %>% mutate(prog1 = if_else(gene %in% vast_l20dl20w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_l20dl20w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_l20dl20w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_l20dl20w$gene_id, "stringtie", "NA")) 
+L20dL20w[L20dL20w == "NA"] = NA
+L20dL20w <- unite(L20dL20w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("L20dL20w"))
+
+L40dL40w <- as.data.frame(L40dL40w)
+colnames(L40dL40w) <- "gene"
+L40dL40w <- L40dL40w %>% mutate(prog1 = if_else(gene %in% vast_l40dl40w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_l40dl40w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_l40dl40w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_l40dl40w$gene_id, "stringtie", "NA")) 
+L40dL40w[L40dL40w == "NA"] = NA
+L40dL40w <- unite(L40dL40w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("L40dL40w"))
+
+L60dL60w <- as.data.frame(L60dL60w)
+colnames(L60dL60w) <- "gene"
+L60dL60w <- L60dL60w %>% mutate(prog1 = if_else(gene %in% vast_l60dl60w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_l60dl60w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_l60dl60w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_l60dl60w$gene_id, "stringtie", "NA")) 
+L60dL60w[L60dL60w == "NA"] = NA
+L60dL60w <- unite(L60dL60w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("L60dL60w"))
+
+K20dL20d <- as.data.frame(K20dL20d)
+colnames(K20dL20d) <- "gene"
+K20dL20d <- K20dL20d %>% mutate(prog1 = if_else(gene %in% vast_k20dl20d$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k20dl20d$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k20dl20d$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k20dl20d$gene_id, "stringtie", "NA")) 
+K20dL20d[K20dL20d == "NA"] = NA
+K20dL20d <- unite(K20dL20d, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K20dL20d"))
+
+K40dL40d <- as.data.frame(K40dL40d)
+colnames(K40dL40d) <- "gene"
+K40dL40d <- K40dL40d %>% mutate(prog1 = if_else(gene %in% vast_k40dl40d$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k40dl40d$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k40dl40d$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k40dl40d$gene_id, "stringtie", "NA")) 
+K40dL40d[K40dL40d == "NA"] = NA
+K40dL40d <- unite(K40dL40d, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K40dL40d"))
+
+K60dL60d <- as.data.frame(K60dL60d)
+colnames(K60dL60d) <- "gene"
+K60dL60d <- K60dL60d %>% mutate(prog1 = if_else(gene %in% vast_k60dl60d$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k60dl60d$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k60dl60d$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k60dl60d$gene_id, "stringtie", "NA")) 
+K60dL60d[K60dL60d == "NA"] = NA
+K60dL60d <- unite(K60dL60d, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K60dL60d"))
+
+K20wL20w <- as.data.frame(K20wL20w)
+colnames(K20wL20w) <- "gene"
+K20wL20w <- K20wL20w %>% mutate(prog1 = if_else(gene %in% vast_k20wl20w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k20wl20w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k20wl20w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k20wl20w$gene_id, "stringtie", "NA")) 
+K20wL20w[K20wL20w == "NA"] = NA
+K20wL20w <- unite(K20wL20w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K20wL20w"))
+
+K40wL40w <- as.data.frame(K40wL40w)
+colnames(K40wL40w) <- "gene"
+K40wL40w <- K40wL40w %>% mutate(prog1 = if_else(gene %in% vast_k40wl40w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k40wl40w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k40wl40w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k40wl40w$gene_id, "stringtie", "NA")) 
+K40wL40w[K40wL40w == "NA"] = NA
+K40wL40w <- unite(K40wL40w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K40wL40w"))
+
+K60wL60w <- as.data.frame(K60wL60w)
+colnames(K60wL60w) <- "gene"
+K60wL60w <- K60wL60w %>% mutate(prog1 = if_else(gene %in% vast_k60wl60w$GeneID, "vast-tools", "NA"), prog2 = if_else(gene %in% kallisto_k60wl60w$gene_id, "kallisto", "NA"), prog3 = if_else(gene %in% majiq_k60wl60w$`Gene ID`, "majiq", "NA"), prog4 = if_else(gene %in% stringtie_k60wl60w$gene_id, "stringtie", "NA")) 
+K60wL60w[K60wL60w == "NA"] = NA
+K60wL60w <- unite(K60wL60w, prog, c(prog1, prog2, prog3, prog4), na.rm = T) %>% 
+  mutate(comp = c("K60wL60w"))
+
+all <- rbind(K20dK20w, K40dK40w, K60dK60w, L20dL20w, L40dL40w, L60dL60w, K20dL20d, K40dL40d, K60dL60d, K20wL20w, K40wL40w, K60wL60w)
+```
+
+at this point, I've got a df containing all the genes, program combos and comp groups. Now, take a random sample of each potential program combo and write it out as a table
+```{r}
+set.seed(43)
+sample <- all %>% group_by(prog) %>% 
+  sample_n(size = 10)
+
+write.csv(sample, "C:/Users/hasna/Documents/MSc_project/stringtie/sp_dAS_analysis/sashimi_scoring.csv", row.names = F, quote = F)
+```
+
+
+following scoring:
+```{r}
+scores <- read_csv("C:/Users/hasna/Documents/MSc_project/stringtie/sp_dAS_analysis/sashimi_scoring_final.csv")
+```
+
+```{r}
+png("test.png", units="in", width=20, height=12, res=300)
+ggplot(scores, aes(x = prog, y = score))+
+  geom_boxplot(fill = "darkturquoise")+
+  theme(axis.text.x = element_text(angle = 45, size = 20, hjust = 1),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20))
+dev.off()
+```
+
+
