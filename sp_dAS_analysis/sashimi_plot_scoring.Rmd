@@ -340,16 +340,28 @@ write.csv(sample, "C:/Users/hasna/Documents/MSc_project/stringtie/sp_dAS_analysi
 following scoring:
 ```{r}
 scores <- read_csv("C:/Users/hasna/Documents/MSc_project/stringtie/sp_dAS_analysis/sashimi_scoring_final.csv")
+
+unique(scores$prog)
+order <- c("vast-tools", "kallisto", "majiq", "stringtie", "vast-tools_kallisto", "vast-tools_majiq", "vast-tools_stringtie", "kallisto_majiq", "kallisto_stringtie", "majiq_stringtie", "vast-tools_kallisto_majiq", "vast-tools_kallisto_stringtie", "vast-tools_majiq_stringtie", "kallisto_majiq_stringtie", "vast-tools_kallisto_majiq_stringtie")
+
+scores <- scores %>% mutate(prog = factor(prog, levels = order)) %>% 
+  arrange(prog) %>% 
+  mutate(prog = prog) %>% 
+  group_by(prog) %>% 
+  mutate(median = median(score))
 ```
 
 ```{r}
 png("test.png", units="in", width=20, height=12, res=300)
-ggplot(scores, aes(x = prog, y = score))+
-  geom_boxplot(fill = "darkturquoise")+
+ggplot(scores, aes(x = prog, y = score, fill = median))+
+  geom_boxplot()+
   theme(axis.text.x = element_text(angle = 45, size = 20, hjust = 1),
         axis.text.y = element_text(size = 20),
         axis.title.x = element_text(size = 20),
-        axis.title.y = element_text(size = 20))
+        axis.title.y = element_text(size = 20),
+        legend.title = element_text(size = 15),
+        legend.text = element_text(size = 15))+
+  scale_fill_gradient2(low = "gray70", high = "darkturquoise")
 dev.off()
 ```
 
