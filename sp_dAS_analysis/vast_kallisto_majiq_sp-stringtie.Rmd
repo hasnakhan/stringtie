@@ -639,9 +639,9 @@ png("test.png", units="in", width=20, height=15, res=300)
 ggVennDiagram(mega_venn,
               label_color = "black",
               label_alpha = 0,
-              label_size = 10,
-              category.names = c("vast-tools", "kallisto", "majiq", "stringtie"),
-              set_size = 10,
+              label_size = 9,
+              category.names = c("VAST-TOOLS", "kallisto", "MAJIQ", "StringTie"),
+              set_size = 9,
               edge_size = 2)+
   scale_fill_gradient(high = "blue", low = "white")+
   theme(legend.key.size = unit(2, "cm"),
