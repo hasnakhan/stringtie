@@ -352,9 +352,10 @@ scores <- scores %>% mutate(prog = factor(prog, levels = order)) %>%
 ```
 
 ```{r}
-png("test.png", units="in", width=20, height=12, res=300)
+png("test.png", units="in", width=12, height=9, res=300)
 ggplot(scores, aes(x = prog, y = score, fill = median))+
   geom_boxplot()+
+  theme_minimal()+
   theme(axis.text.x = element_text(angle = 45, size = 20, hjust = 1),
         axis.text.y = element_text(size = 20),
         axis.title.x = element_text(size = 20),
