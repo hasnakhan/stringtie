@@ -342,7 +342,8 @@ following scoring:
 scores <- read_csv("C:/Users/hasna/Documents/MSc_project/stringtie/sp_dAS_analysis/sashimi_scoring_final.csv")
 
 unique(scores$prog)
-order <- c("vast-tools", "kallisto", "majiq", "stringtie", "vast-tools_kallisto", "vast-tools_majiq", "vast-tools_stringtie", "kallisto_majiq", "kallisto_stringtie", "majiq_stringtie", "vast-tools_kallisto_majiq", "vast-tools_kallisto_stringtie", "vast-tools_majiq_stringtie", "kallisto_majiq_stringtie", "vast-tools_kallisto_majiq_stringtie")
+
+order <- c("vast-tools_kallisto_majiq_stringtie", "vast-tools_majiq_stringtie", "vast-tools_kallisto_majiq", "vast-tools_kallisto_stringtie","kallisto_majiq_stringtie", "vast-tools_majiq", "vast-tools_stringtie","majiq_stringtie", "vast-tools_kallisto",  "kallisto_majiq", "kallisto_stringtie","vast-tools",  "majiq", "stringtie", "kallisto")
 
 scores <- scores %>% mutate(prog = factor(prog, levels = order)) %>% 
   arrange(prog) %>% 

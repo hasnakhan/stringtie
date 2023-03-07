@@ -9,6 +9,7 @@ most of this is a re-hashing of majiq/dAS_analysis/kallisto_vast_majiq.Rmd, with
 library(tidyverse)
 library(scales)
 library(ggVennDiagram)
+library(UpSetR)
 ```
 
 vast-tools:
@@ -632,6 +633,7 @@ vast_long <- rbind(vast_k20dk20w, vast_k20dl20d, vast_k20wl20w, vast_k40dk40w, v
 vast_long$gene_comp=str_c(vast_long$GeneID, vast_long$comp)
 
 mega_venn <- list(vast_long$gene_comp, kallisto_long$gene_comp, majiq_long$gene_comp, stringtie_long$gene_comp)
+names(mega_venn) <- c("VAST-TOOLS", "kallisto", "MAJIQ", "StringTie")
 ```
 
 ```{r}
@@ -647,6 +649,13 @@ ggVennDiagram(mega_venn,
   theme(legend.key.size = unit(2, "cm"),
         legend.title = element_blank(),
         legend.text = element_text(size = 15))
+dev.off()
+```
+
+try it as an UpSet plot, those are nicer
+```{r}
+png("test.png", units="in", width=14, height=6, res=300)
+upset(fromList(mega_venn), order.by = "degree", sets.x.label = "Number of genes", main.bar.color = "royalblue4", shade.color = "turquoise", matrix.color = "black", sets.bar.color = "royalblue4", text.scale = 2.5)
 dev.off()
 ```
 
